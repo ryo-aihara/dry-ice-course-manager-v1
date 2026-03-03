@@ -1,19 +1,7 @@
 /* js/app.js */
 /* BUILD: 20260303a */
-/* Phase 1: 基本状態管理 + 月チェック + 便トグル + 期トグル */
 
-const BUILD_ID = "20260303a";
-
-/* ===============================
-   初期状態
-================================= */
-
-const state = {
-  currentBin: 1,         // 1便 or 2便
-  month: null,           // YYYY-MM
-  shimeMode: null,       // 25 or 30
-  override: false        // OVERRIDE表示用
-};
+import { appState } from "./state.js";
 
 /* ===============================
    初期化
@@ -27,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ===============================
-   月チェック（毎月1日基準）
+   月管理（毎月1日基準）
 ================================= */
 
 function initMonth() {
@@ -37,24 +25,21 @@ function initMonth() {
   const savedMonth = localStorage.getItem("savedMonth");
   const savedMode = localStorage.getItem("shimeMode");
 
-  state.month = currentMonth;
+  appState.month = currentMonth;
 
   if (savedMonth !== currentMonth) {
-    // 月が変わった
     localStorage.setItem("savedMonth", currentMonth);
-    state.shimeMode = null;
+    appState.shimeMode = null;
     showMonthSelection();
   } else {
-    state.shimeMode = savedMode ? Number(savedMode) : null;
+    appState.shimeMode = savedMode ? Number(savedMode) : null;
   }
 }
 
-/* ===============================
-   月初期選択
-================================= */
-
 function showMonthSelection() {
-  const choice = confirm("新しい月です。\n25期ならOK、30期ならキャンセルを押してください。");
+  const choice = confirm(
+    "新しい月です。\n25期ならOK、30期ならキャンセルを押してください。"
+  );
 
   if (choice) {
     setMode(25, false);
@@ -72,26 +57,18 @@ function initBinToggle() {
   const bin2Btn = document.getElementById("bin2Btn");
 
   bin1Btn.addEventListener("click", () => {
-    state.currentBin = 1;
-    updateBinUI();
+    appState.currentBin = 1;
+    updateUI();
   });
 
   bin2Btn.addEventListener("click", () => {
-    state.currentBin = 2;
-    updateBinUI();
+    appState.currentBin = 2;
+    updateUI();
   });
 }
 
-function updateBinUI() {
-  const bin1Btn = document.getElementById("bin1Btn");
-  const bin2Btn = document.getElementById("bin2Btn");
-
-  bin1Btn.classList.toggle("active", state.currentBin === 1);
-  bin2Btn.classList.toggle("active", state.currentBin === 2);
-}
-
 /* ===============================
-   期トグル（25/30）
+   期トグル
 ================================= */
 
 function initModeToggle() {
@@ -99,40 +76,33 @@ function initModeToggle() {
   const btn30 = document.getElementById("mode30Btn");
 
   btn25.addEventListener("click", () => {
-    if (state.shimeMode !== 25) {
+    if (appState.shimeMode !== 25) {
       confirmModeChange(25);
     }
   });
 
   btn30.addEventListener("click", () => {
-    if (state.shimeMode !== 30) {
+    if (appState.shimeMode !== 30) {
       confirmModeChange(30);
     }
   });
 }
 
 function confirmModeChange(newMode) {
-  const ok = confirm(`期を ${newMode} に変更します。\n再計算が行われます。よろしいですか？`);
+  const ok = confirm(
+    `期を ${newMode} に変更します。\n再計算が行われます。よろしいですか？`
+  );
   if (!ok) return;
 
   setMode(newMode, true);
 }
 
 function setMode(mode, isOverride) {
-  state.shimeMode = mode;
-  state.override = isOverride;
+  appState.shimeMode = mode;
+  appState.override = isOverride;
 
   localStorage.setItem("shimeMode", mode);
-
   updateUI();
-}
-
-function updateModeUI() {
-  const btn25 = document.getElementById("mode25Btn");
-  const btn30 = document.getElementById("mode30Btn");
-
-  btn25.classList.toggle("active", state.shimeMode === 25);
-  btn30.classList.toggle("active", state.shimeMode === 30);
 }
 
 /* ===============================
@@ -147,12 +117,24 @@ function updateUI() {
   const modePill = document.getElementById("modePill");
   const overridePill = document.getElementById("overridePill");
 
-  monthPill.textContent = `MONTH: ${state.month}`;
-  modePill.textContent = `MODE: ${state.shimeMode ?? "--"}`;
+  monthPill.textContent = `MONTH: ${appState.month}`;
+  modePill.textContent = `MODE: ${appState.shimeMode ?? "--"}`;
 
-  if (state.override) {
-    overridePill.classList.remove("hidden");
-  } else {
-    overridePill.classList.add("hidden");
-  }
+  overridePill.classList.toggle("hidden", !appState.override);
+}
+
+function updateBinUI() {
+  const bin1Btn = document.getElementById("bin1Btn");
+  const bin2Btn = document.getElementById("bin2Btn");
+
+  bin1Btn.classList.toggle("active", appState.currentBin === 1);
+  bin2Btn.classList.toggle("active", appState.currentBin === 2);
+}
+
+function updateModeUI() {
+  const btn25 = document.getElementById("mode25Btn");
+  const btn30 = document.getElementById("mode30Btn");
+
+  btn25.classList.toggle("active", appState.shimeMode === 25);
+  btn30.classList.toggle("active", appState.shimeMode === 30);
 }
